@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .ml_utils import analyze_review
 from .models import ReviewHistory
 from django.db.models import Avg
+from .explainer import generate_ai_explanation  
 
 
 def home(request):
@@ -20,11 +21,15 @@ def home(request):
             risk_level=result['risk_level']
         )
 
+        # ✅ AI explanation INSIDE POST block
+        ai_explanation = generate_ai_explanation(review, result)
+
         context = {
             'prediction': result['prediction'],
             'trust_score': result['trust_score'],
             'risk_level': result['risk_level'],
-            'reasons': result['reasons']
+            'reasons': result['reasons'],
+            'explanation': ai_explanation
         }
 
         return render(
@@ -37,7 +42,6 @@ def home(request):
         request,
         "detector/home.html"
     )
-
 
 
 def dashboard(request):
@@ -72,16 +76,10 @@ def dashboard(request):
 
 def history(request):
 
-    reviews = ReviewHistory.objects.order_by(
-        '-created_at'
-    )
+    reviews = ReviewHistory.objects.order_by('-created_at')
 
     return render(
         request,
         'detector/history.html',
-        {
-            'reviews': reviews
-        }
+        {'reviews': reviews}
     )
-    
-    
